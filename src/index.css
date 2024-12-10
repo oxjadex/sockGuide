@@ -10,5 +10,8 @@
   text-decoration: none;
   color: black;
   font-family: "Pretendard Variable";
+}
+
+#root {
   background-color: #abca9e;
 }
