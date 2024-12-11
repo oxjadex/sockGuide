@@ -1,19 +1,13 @@
-import Fruits from "assets/fruites.svg";
+import Fruits from "assets/fruit.svg";
 
 const ImageFlowing = () => {
   return (
-    <div className="bg-white overflow-hidden relative w-full">
-      <div className="animate-slide-horizontal w-full flex flex-row">
-        <img
-          src={Fruits}
-          alt="Fruits"
-          className="w-full object-cover h-[60px]"
-        />
-        <img
-          src={Fruits}
-          alt="Fruits"
-          className="w-full object-cover h-[60px]"
-        />
+    <div className="bg-white overflow-hidden relative flex flex-row gap-3">
+      <div className="animate-slideHorizontalTop">
+        <img src={Fruits} alt="Fruits" className="object-fill" />
+      </div>
+      <div className="animate-slideHorizontalBottom">
+        <img src={Fruits} alt="Fruits" className="object-fill" />
       </div>
     </div>
   );
