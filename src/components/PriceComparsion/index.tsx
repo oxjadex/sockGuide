@@ -1,18 +1,35 @@
+/* eslint-disable prettier/prettier */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { ChevronUpIcon, ChevronDownIcon } from "lucide-react";
+import {
+  LeafIcon,
+  InfoIcon,
+  CookingPotIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+} from "lucide-react";
+import Main from "assets/main.svg";
 
-// Props 타입 정의
-interface PriceComparisonTableProps {
-  selectedMonth: string; // 선택된 월 (예: "1월")
+interface SeasonalFoodListProps {
+  selectedMonth: string;
 }
 
-// API 데이터 항목 타입 정의
-interface Item {
-  item_code: string;
-  item_name: string;
-  kind_code: string;
-  kind_name: string;
+interface FoodItem {
+  PRDLST_NM: string;
+  IMG_URL?: string;
+  IDNTFC_NO: string;
+  M_DISTCTNS: string;
+  M_DISTCTNS_ITM: string;
+  PRDLST_CL: string;
+  MTC_NM: string;
+  PRDCTN__ERA: string;
+  MAIN_SPCIES_NM: string;
+  EFFECT: string;
+  PURCHASE_MTH: string;
+  COOK_MTH: string;
+  TRT_MTH: string;
+  REGIST_DE: string;
+  URL: string;
   unit: string;
   day1: string;
   day2: string;
@@ -30,35 +47,42 @@ interface Item {
   dpr7: string;
 }
 
-// 기간 타입 정의
 interface Period {
   label: string;
-  day: keyof Item; // Item의 키 중 하나
-  dpr: keyof Item; // Item의 키 중 하나
+  day: keyof FoodItem;
+  dpr: keyof FoodItem;
 }
 
-const PriceComparisonTable: React.FC<PriceComparisonTableProps> = ({
+const SeasonalFoodPriceComparison: React.FC<SeasonalFoodListProps> = ({
   selectedMonth,
 }) => {
-  const [data, setData] = useState<Item[]>([]); // API 데이터 상태
-  const [loading, setLoading] = useState<boolean>(false); // 로딩 상태
-  const [error, setError] = useState<string | null>(null); // 에러 상태
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null); // 선택 품목 상태
+  const [foods, setFoods] = useState<FoodItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<FoodItem | null>(null);
+  const [expandedFood, setExpandedFood] = useState<string | null>(null);
 
-  const fetchPriceData = async (month: string) => {
-    const apiUrl =
+  const fetchData = async (month: string) => {
+    const apiKeyForSeasonalFoods =
+      "40dc7b48ad418f2d49063f0fda9c574054406f5e99b06a59b4f95b0470524c6e";
+    const apiKeyForPrices = "72022e48-2028-4036-b462-e798246b67a1";
+    const dataType = "json";
+    const seasonalFoodsApiUrl = "Grid_20171128000000000572_1";
+    const pricesApiUrl =
       "https://www.kamis.or.kr/service/price/xml.do?action=dailyPriceByCategoryList";
-    const selectedDate = `${new Date().getFullYear()}-${String(
-      month.replace("월", "").trim(),
-    ).padStart(2, "0")}-01`;
+    const startIndex = 1;
+    const endIndex = 10;
+    const targetUrl = "http://211.237.50.150:7080/openapi";
+    const seasonalFoodsEndPoint = `${targetUrl}/${apiKeyForSeasonalFoods}/${dataType}/${seasonalFoodsApiUrl}/${startIndex}/${endIndex}`;
+    const selectedDate = `${new Date().getFullYear()}-${String(month.replace("월", "").trim()).padStart(2, "0")}-01`;
 
-    const params = {
-      p_cert_key: "72022e48-2028-4036-b462-e798246b67a1", // 인증 키
-      p_cert_id: "5020", // 요청자 ID
-      p_returntype: "json", // 반환 형식
-      p_product_cls_code: "01", // 소매
-      p_item_category_code: "100", // 식량작물
-      p_country_code: "2100", // 서울
+    const pricesParams = {
+      p_cert_key: apiKeyForPrices,
+      p_cert_id: "5020",
+      p_returntype: "json",
+      p_product_cls_code: "01",
+      p_item_category_code: "100",
+      p_country_code: "2100",
       p_regday: selectedDate,
       p_convert_kg_yn: "Y",
     };
@@ -67,12 +91,25 @@ const PriceComparisonTable: React.FC<PriceComparisonTableProps> = ({
     setError(null);
 
     try {
-      const response = await axios.get(apiUrl, { params });
-      setData(response.data.data.item); // item 배열 저장
-      setSelectedItem(response.data.data.item[0]); // 첫 번째 아이템을 기본 선택
-    } catch (error: any) {
+      const [seasonalFoodsResponse, pricesResponse] = await Promise.all([
+        axios.get(seasonalFoodsEndPoint, { params: { M_DISTCTNS: month } }),
+        axios.get(pricesApiUrl, { params: pricesParams }),
+      ]);
+
+      const seasonalFoodsData =
+        seasonalFoodsResponse.data?.Grid_20171128000000000572_1?.row || [];
+      const pricesData = pricesResponse.data.data.item;
+
+      const combinedData = seasonalFoodsData.map((food: any) => ({
+        ...food,
+        ...pricesData.find((item: any) => item.item_name === food.PRDLST_NM),
+      }));
+
+      setFoods(combinedData);
+      setSelectedItem(combinedData[0]);
+    } catch (error) {
       console.error("API 호출 오류:", error);
-      setError("미래 가격은 아직 미지수입니다! 다른 날짜를 골라주세요~ 🚀");
+      setError("데이터를 불러오는 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -80,13 +117,13 @@ const PriceComparisonTable: React.FC<PriceComparisonTableProps> = ({
 
   useEffect(() => {
     if (selectedMonth) {
-      fetchPriceData(selectedMonth);
+      fetchData(selectedMonth);
     }
   }, [selectedMonth]);
 
   const calculatePriceChange = (
     current: string | undefined,
-    previous: string | undefined,
+    previous: string | undefined
   ): number | null => {
     if (!current || !previous) return null;
     const change =
@@ -123,51 +160,76 @@ const PriceComparisonTable: React.FC<PriceComparisonTableProps> = ({
     { label: "평년", day: "day7", dpr: "dpr7" },
   ];
 
+  const toggleFoodDetails = (foodName: string) => {
+    setExpandedFood(expandedFood === foodName ? null : foodName);
+  };
+
   if (loading) {
-    return <p>데이터를 불러오는 중입니다...</p>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
+      </div>
+    );
   }
 
   if (error) {
-    return <p>{error}</p>;
+    return (
+      <div
+        className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+        role="alert"
+      >
+        {error}
+      </div>
+    );
   }
 
-  if (!data || data.length === 0) {
-    return <p>월을 선택하여 데이터를 불러와 주세요.</p>;
+  if (!foods || foods.length === 0) {
+    return (
+      <div className="text-center text-gray-500 py-8">
+        월을 선택하여 데이터를 불러와 주세요.
+      </div>
+    );
   }
 
   return (
-    <div className="bg-white shadow-lg rounded-lg overflow-hidden max-w-4xl mx-auto">
-      <div className="p-4 bg-gray-100 border-b">
-        <h2 className="text-xl font-bold text-gray-800">
-          {selectedItem?.item_name} ({selectedItem?.kind_name}) Price Comparison
-        </h2>
-        <p className="text-sm text-gray-600">
-          품목코드: {selectedItem?.item_code} | 품종코드:{" "}
-          {selectedItem?.kind_code}
-        </p>
+    <div className="bg-white shadow-lg rounded-lg overflow-hidden max-w-4xl mx-auto px-14">
+      <div>
+        <div className="flex justify-center py-2 items-center flex-col gap-20">
+          <div> 📂 11월의 제철 음식 및 가격 변동 사항입니다.</div>
+          <img src={Main} className="w-80"></img>
+        </div>
+      </div>
+      <div>
+        <div className="flex justify-center py-2 items-center flex-col">
+          <div>
+            11월의 제철 식재료, 그 맛과 가격 이야기! 🍽️ <br />
+            두릅부터 시작해볼까요? 10월, 청경채은 제철을 맞아 가장 맛있고 영양가
+            높은 시기입니다. 미역은 더욱 특별해요. 전월 대비 무려 67% 가격이
+            떨어져 1kg당 평균 1,983원에 구매 가능합니다. 입맛과 지갑을 모두
+            만족시키는 11월의 식탁, 지금 바로 즐겨보세요!
+          </div>
+        </div>
         <select
+          className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
           onChange={(e) =>
             setSelectedItem(
-              data.find((item) => item.item_name === e.target.value) || null,
+              foods.find((item) => item.PRDLST_NM === e.target.value) || null
             )
           }
-          value={selectedItem?.item_name || ""}
-        >
-          {data.map((item) => (
-            <option key={item.item_code} value={item.item_name}>
-              {item.item_name} ({item.kind_name})
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="p-4">
+          value={selectedItem?.PRDLST_NM || ""}
+        ></select>
         <table className="w-full">
           <thead>
-            <tr className="bg-gray-50">
-              <th className="p-2 text-left">기준</th>
-              <th className="p-2 text-right">가격</th>
-              <th className="p-2 text-right">변동률</th>
+            <tr className="bg-blue-50">
+              <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                기준
+              </th>
+              <th className="p-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                가격
+              </th>
+              <th className="p-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                변동률
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -178,18 +240,21 @@ const PriceComparisonTable: React.FC<PriceComparisonTableProps> = ({
 
               const priceChange = calculatePriceChange(
                 currentPrice,
-                previousPrice,
+                previousPrice
               );
 
               return (
-                <tr key={period.label} className="border-b hover:bg-gray-50">
-                  <td className="p-2 text-gray-700">
+                <tr
+                  key={period.label}
+                  className="border-b hover:bg-blue-50 transition-colors duration-200"
+                >
+                  <td className="p-3 text-gray-700">
                     {period.label} ({selectedItem?.[period.day]})
                   </td>
-                  <td className="p-2 text-right font-semibold">
+                  <td className="p-3 text-right font-semibold text-gray-900">
                     {currentPrice} {selectedItem?.unit}
                   </td>
-                  <td className="p-2 text-right">
+                  <td className="p-3 text-right">
                     {renderPriceChangeIndicator(priceChange)}
                   </td>
                 </tr>
@@ -198,8 +263,91 @@ const PriceComparisonTable: React.FC<PriceComparisonTableProps> = ({
           </tbody>
         </table>
       </div>
+
+      <div className="space-y-4 p-4">
+        {foods.map((food, index) => (
+          <div
+            key={index}
+            className="bg-white border rounded-lg shadow-sm hover:shadow-md transition-all duration-300"
+          >
+            <div
+              className="flex items-center p-4 cursor-pointer hover:bg-gray-50"
+              onClick={() => toggleFoodDetails(food.PRDLST_NM)}
+            >
+              <img
+                src={food.IMG_URL || "/placeholder-image.png"}
+                alt={food.PRDLST_NM}
+                className="w-24 h-24 object-cover rounded-md mr-4"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = "/placeholder-image.png";
+                }}
+              />
+              <div>
+                <h3 className="text-xl font-semibold text-green-800 flex items-center">
+                  <LeafIcon className="mr-2 text-green-600" size={20} />
+                  {food.PRDLST_NM}
+                </h3>
+                <p className="text-gray-600">{food.PRDLST_CL}</p>
+              </div>
+            </div>
+
+            {expandedFood === food.PRDLST_NM && (
+              <div className="p-4 bg-green-50 border-t">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-bold text-green-700 mb-2 flex items-center">
+                      <InfoIcon className="mr-2 text-green-600" size={18} />
+                      농산물 정보
+                    </h4>
+                    <p>
+                      <strong>주요 산지:</strong> {food.MTC_NM}
+                    </p>
+                    <p>
+                      <strong>생산 기간:</strong> {food.PRDCTN__ERA}
+                    </p>
+                    <p>
+                      <strong>주요 품종:</strong> {food.MAIN_SPCIES_NM}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-green-700 mb-2 flex items-center">
+                      <CookingPotIcon
+                        className="mr-2 text-green-600"
+                        size={18}
+                      />
+                      요리 및 건강 정보
+                    </h4>
+                    <p>
+                      <strong>효능:</strong> {food.EFFECT}
+                    </p>
+                    <p>
+                      <strong>구매 방법:</strong> {food.PURCHASE_MTH}
+                    </p>
+                    <p>
+                      <strong>요리 방법:</strong> {food.COOK_MTH}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 text-right">
+                  <a
+                    href={food.URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-green-700 hover:text-green-900 underline flex items-center justify-end"
+                  >
+                    <InfoIcon className="mr-2" size={16} />
+                    자세히 보기
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
-export default PriceComparisonTable;
+export default SeasonalFoodPriceComparison;

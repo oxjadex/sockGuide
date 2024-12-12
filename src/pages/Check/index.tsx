@@ -1,10 +1,9 @@
 import PriceComparisonTable from "components/PriceComparsion/index";
-import SeasonFood from "components/SeasonFood";
+import SeasonFood from "components/SeasonFood/SeasonalDashboard";
 const Check = () => {
   return (
-    <div>
-      <PriceComparisonTable selectedMonth="2"></PriceComparisonTable>
-      <SeasonFood selectedMonth="3월"></SeasonFood>
+    <div className="max-w-[640px] mx-auto bg-white h-screen sm:w-full sm:h-screen">
+      <PriceComparisonTable selectedMonth="10월" />
     </div>
   );
 };
