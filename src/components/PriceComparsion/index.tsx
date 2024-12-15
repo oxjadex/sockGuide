@@ -192,7 +192,7 @@ const SeasonalFoodPriceComparison: React.FC<SeasonalFoodListProps> = ({
   }
 
   return (
-    <div className="bg-white shadow-lg rounded-lg overflow-hidden max-w-4xl mx-auto px-14">
+    <div className="bg-white shadow-lg rounded-lg overflow-hidden max-w-4xl mx-auto px-20">
       <div>
         <div className="flex justify-center py-2 items-center flex-col gap-20">
           <div> 📂 11월의 제철 음식 및 가격 변동 사항입니다.</div>
@@ -204,9 +204,9 @@ const SeasonalFoodPriceComparison: React.FC<SeasonalFoodListProps> = ({
           <div>
             11월의 제철 식재료, 그 맛과 가격 이야기! 🍽️ <br />
             두릅부터 시작해볼까요? 10월, 청경채은 제철을 맞아 가장 맛있고 영양가
-            높은 시기입니다. 미역은 더욱 특별해요. 전월 대비 무려 67% 가격이
+            높은 시기입니다. 쌀은 더욱 특별해요. 전월 대비 무려 67% 가격이
             떨어져 1kg당 평균 1,983원에 구매 가능합니다. 입맛과 지갑을 모두
-            만족시키는 11월의 식탁, 지금 바로 즐겨보세요!
+            만족시키는 11월의 식탁, 지금 바로 즐겨보세요! 🌿🌊
           </div>
         </div>
         <select
@@ -217,7 +217,19 @@ const SeasonalFoodPriceComparison: React.FC<SeasonalFoodListProps> = ({
             )
           }
           value={selectedItem?.PRDLST_NM || ""}
-        ></select>
+        >
+          {foods.map((food) => (
+            <option key={food.IDNTFC_NO} value={food.PRDLST_NM}>
+              {food.PRDLST_NM} ({food.PRDLST_CL})
+            </option>
+          ))}
+        </select>
+        <div className="rounded-md border border-gray-300 shadow-lg w-full h-96 flex justify-center items-center flex-col p-31">
+          <div className="text-[60px] font-medium leading-[68px]">🛎️</div>
+          <div className="text=[20px]  text-center font-pretendard  font-bold leading-[28px]">
+            11월 제철 식재료의 가격 변동
+          </div>
+        </div>
         <table className="w-full">
           <thead>
             <tr className="bg-blue-50">
