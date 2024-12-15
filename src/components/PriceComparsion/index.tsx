@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Main from "assets/main.svg";
+import SeasonFood from "components/SeasonFood/index";
+
 interface SeasonalFoodListProps {
   selectedMonth: string;
 }
@@ -95,10 +97,12 @@ const SeasonalFoodPriceComparison: React.FC<SeasonalFoodListProps> = ({
     previous: string
   ): string | null => {
     if (!current || !previous || parseFloat(previous) === 0) return null;
+
     const currentValue = parseFloat(current.replace(/,/g, ""));
     const previousValue = parseFloat(previous.replace(/,/g, ""));
     const change = ((currentValue - previousValue) / previousValue) * 100;
-    return change.toFixed(2);
+
+    return change.toFixed(2); // 퍼센트 기호 제거
   };
 
   const calculateAdjustedPrice = (base: string, adjustment: string): string => {
@@ -115,8 +119,8 @@ const SeasonalFoodPriceComparison: React.FC<SeasonalFoodListProps> = ({
   if (error) return <div>{error}</div>;
 
   return (
-    <div className="bg-white shadow-lg rounded-lg max-w-4xl mx-auto px-20 w-full overflow-auto h-full">
-      <div className="text-center mb-6">
+    <div className="bg-white shadow-lg rounded-lg max-w-4xl mx-auto px-20 py-4 w-full overflow-auto h-full">
+      <div className="text-center mb-16">
         <div>
           <div className="flex justify-center py-2 items-center flex-col gap-20">
             <div> 📂 11월의 제철 음식 및 가격 변동 사항입니다.</div>
@@ -138,20 +142,14 @@ const SeasonalFoodPriceComparison: React.FC<SeasonalFoodListProps> = ({
         </div>
       </div>
       {selectedItem ? (
-        <div className="rounded-md border border-gray-300 shadow-lg w-full h-96 flex justify-center items-center flex-col p-31">
+        <div className="rounded-md border border-gray-300 shadow-lg w-full h-112 flex justify-center items-center flex-col p-31 py-8">
           <div className="text-[60px] font-medium leading-[68px]">🛎️</div>
-          <div className="text=[20px]  text-center font-pretendard  font-bold leading-[28px]">
-            11월 제철 식재료의 가격 변동
+          <div className="text=[24px]  text-center font-pretendard  font-bold leading-[28px]">
+            10월 쌀의
+            <br />
+            가격 변동
           </div>
-
           <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="p-3 text-left">기준</th>
-                <th className="p-3 text-right">가격</th>
-                <th className="p-3 text-right">변동률</th>
-              </tr>
-            </thead>
             <tbody>
               {[
                 { label: "현재", price: selectedItem.dpr1 },
@@ -159,13 +157,10 @@ const SeasonalFoodPriceComparison: React.FC<SeasonalFoodListProps> = ({
                 { label: "전년", price: selectedItem.dpr6 },
                 { label: "평년", price: selectedItem.dpr7 },
               ].map((period, index, arr) => {
-                const adjustedPreviousPrice =
-                  index > 0
-                    ? calculateAdjustedPrice(
-                        selectedItem.dpr7,
-                        arr[index - 1].price
-                      )
-                    : null;
+                const adjustedPreviousPrice = calculateAdjustedPrice(
+                  selectedItem.dpr7,
+                  selectedItem.dpr1
+                );
 
                 const adjustedCurrentPrice = calculateAdjustedPrice(
                   selectedItem.dpr7,
@@ -180,22 +175,23 @@ const SeasonalFoodPriceComparison: React.FC<SeasonalFoodListProps> = ({
                   : null;
 
                 return (
-                  <tr key={period.label} className="border-b">
-                    <td className="p-3">{period.label}</td>
-                    <td className="p-2 text-right font-bold text-blue-600">
+                  <div
+                    key={period.label}
+                    className="px-12 flex justify-between"
+                  >
+                    <td className="p-3  font-bold">{period.label}</td>
+                    <div className="p-4 text-right flex flex-col flex-start">
+                      {selectedItem.unit} /
                       {calculateAdjustedPrice(selectedItem.dpr7, period.price)}{" "}
-                      {selectedItem.unit}
-                    </td>
-                    <td className="p-3 text-right">
-                      {change ? (
-                        <span className={"flex items-center justify-end "}>
-                          {change}%
-                        </span>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-                  </tr>
+                      <div className="text-left">
+                        {change ? (
+                          <span className="text-[#50ABB0]">등락 {change}%</span>
+                        ) : (
+                          "-"
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </tbody>
@@ -204,6 +200,12 @@ const SeasonalFoodPriceComparison: React.FC<SeasonalFoodListProps> = ({
       ) : (
         <div>쌀 데이터가 존재하지 않습니다.</div>
       )}
+      <div className="my-8 text-center ext-black font-[Pretendard] text-base not-italic font-medium leading-6">
+        다른 식재료들의 가격도 궁금할 당신을 위해 준비했어요
+      </div>
+      <div>
+        <SeasonFood selectedMonth="10월" />
+      </div>
     </div>
   );
 };
