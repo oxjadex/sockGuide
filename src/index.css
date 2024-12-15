@@ -5,13 +5,18 @@
 * {
   margin: 0;
   padding: 0;
-  box-sizing: inherit;
+  box-sizing: border-box;
   outline: none;
   text-decoration: none;
   color: black;
   font-family: "Pretendard Variable";
 }
 
+body {
+  min-height: 100vh;
+}
+
 #root {
   background-color: #abca9e;
+  height: auto;
 }

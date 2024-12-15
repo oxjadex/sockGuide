@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { ChevronUpIcon, ChevronDownIcon } from "lucide-react";
+import Main from "assets/main.svg";
 interface SeasonalFoodListProps {
   selectedMonth: string;
 }
@@ -104,72 +104,103 @@ const SeasonalFoodPriceComparison: React.FC<SeasonalFoodListProps> = ({
   const calculateAdjustedPrice = (base: string, adjustment: string): string => {
     const basePrice = parseFloat(base.replace(/,/g, "")); // 평년가
     const adjPrice = parseFloat(adjustment.replace(/,/g, "")); // dpr 값
-    if (adjPrice < 3000) return (basePrice + adjPrice).toLocaleString("ko-KR"); // 합산 후 표시
-    return basePrice.toLocaleString("ko-KR");
+    if (adjPrice < 3000)
+      return (basePrice + adjPrice).toLocaleString("ko-KR"); // 합산 후 표시
+    else if (adjPrice < 40000)
+      return (20000 + adjPrice).toLocaleString("ko-KR");
+    return adjPrice.toLocaleString("ko-KR");
   };
 
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div>{error}</div>;
 
   return (
-    <div className="bg-white shadow-lg rounded-lg max-w-4xl mx-auto p-8">
+    <div className="bg-white shadow-lg rounded-lg max-w-4xl mx-auto px-20 w-full overflow-auto h-full">
       <div className="text-center mb-6">
-        <div className="text-2xl font-bold mb-2">10월 쌀의 가격 변동</div>
+        <div>
+          <div className="flex justify-center py-2 items-center flex-col gap-20">
+            <div> 📂 11월의 제철 음식 및 가격 변동 사항입니다.</div>
+            <img src={Main} className="w-80"></img>
+          </div>
+        </div>
+        <div>
+          <div className="flex justify-center py-2 items-center flex-col">
+            <div className="text-left">
+              11월의 제철 식재료, 그 맛과 가격 이야기! 🍽️ <br />
+              두릅부터 시작해볼까요? 10월, 청경채은 제철을 맞아 가장 맛있고
+              영양가 높은 시기입니다. 미역은 더욱 특별해요. 전월 대비 무려 67%
+              가격이 높은 시기입니다. 쌀은 더욱 특별해요. 전월 대비 무려 67%
+              가격이 떨어져 1kg당 평균 1,983원에 구매 가능합니다. 입맛과 지갑을
+              모두 만족시키는 11월의 식탁, 지금 바로 즐겨보세요! 만족시키는
+              11월의 식탁, 지금 바로 즐겨보세요! 🌿🌊
+            </div>
+          </div>
+        </div>
       </div>
       {selectedItem ? (
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="p-3 text-left">기준</th>
-              <th className="p-3 text-right">가격</th>
-              <th className="p-3 text-right">변동률</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              { label: "현재", price: selectedItem.dpr1 },
-              { label: "전월", price: selectedItem.dpr2 },
-              { label: "전년", price: selectedItem.dpr6 },
-              { label: "평년", price: selectedItem.dpr7 },
-            ].map((period, index, arr) => {
-              const previousPrice =
-                index > 0 ? arr[index - 1].price : undefined;
-              const change = previousPrice
-                ? calculatePriceChange(period.price, previousPrice)
-                : null;
+        <div className="rounded-md border border-gray-300 shadow-lg w-full h-96 flex justify-center items-center flex-col p-31">
+          <div className="text-[60px] font-medium leading-[68px]">🛎️</div>
+          <div className="text=[20px]  text-center font-pretendard  font-bold leading-[28px]">
+            11월 제철 식재료의 가격 변동
+          </div>
 
-              return (
-                <tr key={period.label} className="border-b">
-                  <td className="p-3">{period.label}</td>
-                  <td className="p-2 text-right font-bold text-blue-600">
-                    {calculateAdjustedPrice(selectedItem.dpr7, period.price)}{" "}
-                    {selectedItem.unit}
-                  </td>
-                  <td className="p-3 text-right">
-                    {change ? (
-                      <span
-                        className={`flex items-center justify-end ${
-                          parseFloat(change) >= 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {parseFloat(change) >= 0 ? (
-                          <ChevronUpIcon size={16} />
-                        ) : (
-                          <ChevronDownIcon size={16} />
-                        )}
-                        {change}%
-                      </span>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="p-3 text-left">기준</th>
+                <th className="p-3 text-right">가격</th>
+                <th className="p-3 text-right">변동률</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { label: "현재", price: selectedItem.dpr1 },
+                { label: "전월", price: selectedItem.dpr5 },
+                { label: "전년", price: selectedItem.dpr6 },
+                { label: "평년", price: selectedItem.dpr7 },
+              ].map((period, index, arr) => {
+                const adjustedPreviousPrice =
+                  index > 0
+                    ? calculateAdjustedPrice(
+                        selectedItem.dpr7,
+                        arr[index - 1].price
+                      )
+                    : null;
+
+                const adjustedCurrentPrice = calculateAdjustedPrice(
+                  selectedItem.dpr7,
+                  period.price
+                );
+
+                const change = adjustedPreviousPrice
+                  ? calculatePriceChange(
+                      adjustedCurrentPrice,
+                      adjustedPreviousPrice
+                    )
+                  : null;
+
+                return (
+                  <tr key={period.label} className="border-b">
+                    <td className="p-3">{period.label}</td>
+                    <td className="p-2 text-right font-bold text-blue-600">
+                      {calculateAdjustedPrice(selectedItem.dpr7, period.price)}{" "}
+                      {selectedItem.unit}
+                    </td>
+                    <td className="p-3 text-right">
+                      {change ? (
+                        <span className={"flex items-center justify-end "}>
+                          {change}%
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <div>쌀 데이터가 존재하지 않습니다.</div>
       )}
